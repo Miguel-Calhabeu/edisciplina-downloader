@@ -5,12 +5,14 @@ A Chrome extension that automatically downloads all files from e-Disciplinas cou
 ## Features
 
 - 🚀 **One-Click Download**: Download all files from a course page instantly
-- � **Smart Organization**: Automatic organization by custom directory and course code
-- �📥 **Automatic File Naming**: Preserves original file extensions (`.pdf`, `.docx`, etc.)
+- 📦 **Smart Organization**: Automatic organization by custom directory and course code
+-  **Automatic File Naming**: Preserves original file extensions (`.pdf`, `.docx`, etc.)
 - 🔗 **Advanced URL Detection**: 9-strategy system handles complex redirect chains
 - ⚙️ **Persistent Settings**: Configure download directories that persist across sessions
 - 🤖 **Course Auto-Detection**: Automatically extracts course code from page
 - 🎨 **Beautiful UI**: Clean, intuitive interface with settings page
+- 🔍 **Enhanced Debugging**: Comprehensive console logging for troubleshooting (v1.2.0+)
+- ⏱️ **Timeout Protection**: 15-second timeout prevents hanging on slow connections (v1.2.0+)
 - ✅ **Manifest V3 Ready**: Modern Chrome extension architecture
 
 ## How It Works
@@ -140,6 +142,22 @@ The extension uses multiple strategies to reliably find download URLs:
 
 ## Troubleshooting
 
+### Detailed Debugging (v1.2.0+)
+
+The extension now includes comprehensive console logging to help diagnose issues:
+
+1. **Enable Developer Tools**: Press `F12` on your e-Disciplinas course page
+2. **Go to Console Tab**: Look for messages starting with `[e-Disciplinas]`
+3. **Check Service Worker**: Go to `chrome://extensions/` → click "Service worker" link for backend logs
+4. **Review Error Messages**: Look for `Strategy N matched` to see which extraction method worked
+5. **See Full Guide**: Check `DEBUGGING.md` for detailed troubleshooting steps
+
+**Key log indicators:**
+- ✓ Download initiated: File successfully processed
+- ⚠ Warning: Fetch or extraction issue (may still work)
+- ✗ Strategy N matched: Shows which URL extraction method succeeded
+- ✗ No extraction strategy matched: No file URL found in resource page
+
 ### Files Not Downloading
 
 **Problem**: "Initiated 0 file download(s)"
@@ -234,7 +252,8 @@ The extension uses multiple strategies to reliably find download URLs:
 
 ## Version History
 
-- **v1.1.1** (Current) - File extension preservation fix
+- **v1.2.0** (Current) - Enhanced error handling, improved debugging, 15s timeout, better user feedback
+- **v1.1.1** - File extension preservation fix
 - **v1.1** - Download organization system with persistent settings
 - **v1.0** - Initial release with basic file detection
 
@@ -272,14 +291,14 @@ For issues, feature requests, or questions:
 ## Quick Links
 
 - 📖 **Setup Guide**: See `Documentation/CHROME_EXTENSION_SETUP.md`
+- 🐛 **Debugging Guide**: See `DEBUGGING.md` for console log analysis
 - ⚡ **Quick Start**: See `Documentation/QUICK_START_v1.1.md`
 - 🔧 **Technical Details**: See `Documentation/IMPLEMENTATION_OVERVIEW_v1.1.md`
-- 🐛 **Recent Fix**: See `Documentation/FIX_v1.1.1_FILE_EXTENSIONS.md`
 
 ---
 
-**Version**: 1.1.1
-**Last Updated**: November 11, 2025
+**Version**: 1.2.0
+**Last Updated**: January 2025
 **Status**: ✅ Production Ready
 
 Made with ❤️ for USP students
