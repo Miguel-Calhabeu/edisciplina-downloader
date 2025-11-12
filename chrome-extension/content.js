@@ -135,15 +135,21 @@
 
         console.log(`[e-Disciplinas] File extension: ${fileExtension || 'none'}, Final filename: ${fileNameWithExtension}`);
 
+        // Sanitize filename to remove invalid characters
+        const sanitizedFilename = sanitizeFilename(fileNameWithExtension);
+        if (sanitizedFilename !== fileNameWithExtension) {
+          console.log(`[e-Disciplinas] Filename sanitized: ${fileNameWithExtension} → ${sanitizedFilename}`);
+        }
+
         // Trigger the download using Chrome's download API via background script
         try {
           const downloadResponse = await chrome.runtime.sendMessage({
             action: 'downloadFile',
             url: fileUrl,
-            filename: fileNameWithExtension,
+            filename: sanitizedFilename,
             courseCode: courseCode
           });
-          
+
           if (downloadResponse && downloadResponse.success) {
             console.log(`[e-Disciplinas] ✓ Download initiated for: ${fileNameWithExtension}`);
             downloadedCount++;
@@ -194,6 +200,24 @@
     // Remove "Arquivo" or similar module indicators
     text = text.replace(/^\s*(Arquivo|File|Resource)\s*/i, '');
     return text.replace(/\s+/g, '_') || 'file';
+  }
+
+  /**
+   * Sanitize filename to remove invalid characters that Chrome rejects
+   * Removes: colons, parentheses, and other problematic chars
+   */
+  function sanitizeFilename(filename) {
+    // Remove invalid filename characters
+    // Replace colons, parentheses, asterisks, question marks, quotes, pipes, angle brackets
+    let sanitized = filename.replace(/[:<>"|?*()]/g, '');
+    
+    // Replace common problematic patterns
+    sanitized = sanitized.replace(/[\\/]/g, '-'); // Replace slashes with dash
+    sanitized = sanitized.replace(/\s+/g, '_');   // Spaces to underscores
+    sanitized = sanitized.replace(/_+/g, '_');    // Remove multiple underscores
+    sanitized = sanitized.replace(/^_|_$/g, '');  // Remove leading/trailing underscores
+    
+    return sanitized || 'file';
   }
 
   /**
