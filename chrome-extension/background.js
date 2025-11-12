@@ -31,6 +31,10 @@ async function handleDownload(request, sendResponse) {
       filename = `${customPath}/${filename}`;
     }
 
+    console.log(`[e-Disciplinas BG] Downloading: ${request.filename}`);
+    console.log(`[e-Disciplinas BG] Full path: ${filename}`);
+    console.log(`[e-Disciplinas BG] URL: ${request.url}`);
+
     // Use Chrome's download API
     chrome.downloads.download({
       url: request.url,
@@ -38,12 +42,15 @@ async function handleDownload(request, sendResponse) {
       saveAs: false
     }, (downloadId) => {
       if (chrome.runtime.lastError) {
+        console.error(`[e-Disciplinas BG] Download failed: ${chrome.runtime.lastError.message}`);
         sendResponse({ success: false, error: chrome.runtime.lastError.message });
       } else {
+        console.log(`[e-Disciplinas BG] ✓ Download initiated with ID: ${downloadId}`);
         sendResponse({ success: true, downloadId });
       }
     });
   } catch (error) {
+    console.error(`[e-Disciplinas BG] Error: ${error.message}`);
     sendResponse({ success: false, error: error.message });
   }
 }

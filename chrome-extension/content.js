@@ -40,10 +40,15 @@
     let downloadedCount = 0;
     let errors = [];
 
-    // Process each file link
+    // Process each file link with a small delay between requests to avoid rate limiting
     for (let i = 0; i < fileLinks.length; i++) {
       const link = fileLinks[i];
       try {
+        // Add a small delay between fetches to avoid rate limiting (200ms)
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
         // Get the file name from the link text
         const fileName = extractFileName(link);
         const resourceUrl = link.href;
@@ -53,17 +58,35 @@
 
         // Fetch the resource view page with follow redirect
         let response;
+        let html;
         try {
+          // First try with automatic redirect following
           response = await fetch(resourceUrl, { redirect: 'follow' });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          html = await response.text();
         } catch (fetchError) {
-          throw new Error(`Fetch failed: ${fetchError.message}`);
+          // If normal fetch fails, try manual follow of redirects (for edge cases)
+          console.warn(`[e-Disciplinas] Fetch with redirect failed: ${fetchError.message}`);
+          try {
+            response = await fetch(resourceUrl, { redirect: 'manual' });
+            const redirectLocation = response.headers.get('location');
+            if (redirectLocation) {
+              console.log(`[e-Disciplinas] Got manual redirect to: ${redirectLocation}`);
+              response = await fetch(redirectLocation);
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status} on redirect`);
+              }
+              html = await response.text();
+            } else {
+              throw fetchError; // Re-throw original error if no redirect header
+            }
+          } catch (manualError) {
+            throw new Error(`Fetch failed: ${manualError.message}`);
+          }
         }
         
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const html = await response.text();
         console.log(`[e-Disciplinas] Received ${html.length} bytes, final URL: ${response.url}`);
 
         // The final URL after redirects is in response.url
