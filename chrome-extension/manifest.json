@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "e-Disciplinas File Downloader",
-  "version": "1.1",
+  "version": "1.2.0",
   "description": "Download all files from e-Disciplinas course pages with custom organization",
   "permissions": [
     "activeTab",
