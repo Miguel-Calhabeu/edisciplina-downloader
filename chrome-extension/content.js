@@ -44,33 +44,33 @@
     for (let i = 0; i < fileLinks.length; i++) {
       const link = fileLinks[i];
       try {
-        // Add a small delay between fetches to avoid rate limiting (200ms)
+        // Add a small delay between fetches to avoid rate limiting (100ms)
         if (i > 0) {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         // Get the file name from the link text
         const fileName = extractFileName(link);
         const resourceUrl = link.href;
-        
+
         console.log(`[e-Disciplinas] [${i+1}/${fileLinks.length}] Processing: ${fileName}`);
         console.log(`[e-Disciplinas] Resource URL: ${resourceUrl}`);
 
         // Fetch the resource view page with follow redirect
         let response;
         let html;
-        const FETCH_TIMEOUT = 15000; // 15 second timeout
-        
+        const FETCH_TIMEOUT = 8000; // 8 second timeout (reduced from 15s for better UX)
+
         try {
           // Create an AbortController for timeout
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-          
+
           try {
             // First try with automatic redirect following
-            response = await fetch(resourceUrl, { 
+            response = await fetch(resourceUrl, {
               redirect: 'follow',
-              signal: controller.signal 
+              signal: controller.signal
             });
             clearTimeout(timeoutId);
           } catch (fetchError) {
@@ -80,11 +80,11 @@
             }
             throw fetchError;
           }
-          
+
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
-          
+
           html = await response.text();
         } catch (fetchError) {
           // If normal fetch fails, try manual follow of redirects (for edge cases)
@@ -92,13 +92,13 @@
           try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-            
-            response = await fetch(resourceUrl, { 
+
+            response = await fetch(resourceUrl, {
               redirect: 'manual',
-              signal: controller.signal 
+              signal: controller.signal
             });
             clearTimeout(timeoutId);
-            
+
             const redirectLocation = response.headers.get('location');
             if (redirectLocation) {
               console.log(`[e-Disciplinas] Got manual redirect to: ${redirectLocation}`);
@@ -114,7 +114,7 @@
             throw new Error(`Fetch failed: ${manualError.message}`);
           }
         }
-        
+
         console.log(`[e-Disciplinas] Received ${html.length} bytes, final URL: ${response.url}`);
 
         // The final URL after redirects is in response.url
@@ -136,15 +136,26 @@
         console.log(`[e-Disciplinas] File extension: ${fileExtension || 'none'}, Final filename: ${fileNameWithExtension}`);
 
         // Trigger the download using Chrome's download API via background script
-        await chrome.runtime.sendMessage({
-          action: 'downloadFile',
-          url: fileUrl,
-          filename: fileNameWithExtension,
-          courseCode: courseCode
-        });
-
-        console.log(`[e-Disciplinas] ✓ Download initiated for: ${fileNameWithExtension}`);
-        downloadedCount++;
+        try {
+          const downloadResponse = await chrome.runtime.sendMessage({
+            action: 'downloadFile',
+            url: fileUrl,
+            filename: fileNameWithExtension,
+            courseCode: courseCode
+          });
+          
+          if (downloadResponse && downloadResponse.success) {
+            console.log(`[e-Disciplinas] ✓ Download initiated for: ${fileNameWithExtension}`);
+            downloadedCount++;
+          } else {
+            const bgError = downloadResponse ? downloadResponse.error : 'Unknown download error';
+            console.error(`[e-Disciplinas] Download failed: ${bgError}`);
+            errors.push(`Download failed for ${fileNameWithExtension}: ${bgError}`);
+          }
+        } catch (downloadError) {
+          console.error(`[e-Disciplinas] Failed to send download message: ${downloadError.message}`);
+          errors.push(`Failed to trigger download for ${fileNameWithExtension}`);
+        }
       } catch (error) {
         const errMsg = `Error processing file: ${error.message}`;
         console.error(`[e-Disciplinas] ${errMsg}`);
